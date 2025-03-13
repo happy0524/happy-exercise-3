@@ -30,30 +30,70 @@
 */
 
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #define _CRT_SECURE_NO_WARNINGS
 
 int level = 1;
 arrayFish[6];
+int* cursor;
+
 void initData();
 void printFIshes();
+void decreaseWater(long elapsedTime);
+int checkFishAlive();
 
 int main(void) {
-	long startTime = 0;
-	int num;
-	initData();
-	startTime = clock();
+	long startTime = 0; // 시작 시간 
+	int num; // 물을 줄 어항 
+	long totalElapsedTime = 0; // 총 경과 시간 
+	long prevElapsedTime = 0; // 최근 경과 시간 
+	initData(); // 레벨, 어항의 물 높이 초기화 
+	startTime = clock(); // 시간 경과 
+
+	cursor = arrayFish;
+
 	while (1) {
-		printFIshes();
+		printFIshes(); // 어항 물 높이 출력
 		printf("몇 번 어항에 물을 줄까요?(1~6)");
 		scanf_s("%d", &num);
 		if (num < 1 || num > 6) { // 오류 범위를 사용해 범위화
 			printf("\n입력값이 잘못되었습니다.\n");
 			continue;
 		}
+
+		totalElapsedTime = (clock() - startTime) / CLOCKS_PER_SEC;
+
+		printf("총 경과 시간 : %ld초\n", totalElapsedTime);
+		prevElapsedTime = totalElapsedTime - prevElapsedTime;
+		printf("최근 경과 시간 : %ld", prevElapsedTime);
+		decreaseWater(prevElapsedTime);
+
+		if (cursor[num - 1] <= 0) {
+			printf("%d번 어항의 물고기는 이미 죽었으므로 물을 주지 않습니다.\n", num);
+		}
+		else if (cursor[num - 1] + 1 <= 100) {
+			printf("%d번 어항에 물을 줍니다.\n\n", num);
+			cursor[num - 1] += 1;
+		}
+		if (totalElapsedTime / 20 > level - 1) {
+			level++;
+			printf("***축하합니다. %d레벨에서 %d레벨로 올랐습니다.***\n\n", level - 1, level);
+			if (level == 5) {
+				printf("***축하합니다.최고 레벨을 달성했습니다. 게임을 종료합니다.\n\n");
+				exit(0);
+			}
+		}
+
+		if (checkFishAlive() == 0) {
+			printf("모든 물고기가 죽었습니다.ㅜㅜ\n\n");
+			exit(0);
+		} else {
+			printf("물고기가 아직 살아 있어요.\n\n");
+		}
+		prevElapsedTime = totalElapsedTime;
 	}
 	return 0;
 }
@@ -76,4 +116,25 @@ void printFIshes() { // 어항 물 높이 출력하는 함수 (시각적인 부분 대신)
 	}
 	printf("\n\n");
 	return;
+}
+
+void decreaseWater(long elapsedTime) { // 시간에 따라 줄어드는 물의 양 측정 함수
+
+	for (int i = 0; i < 6; i++) {
+
+		arrayFish[i] -= (level * 3 * (int)elapsedTime);
+		if (arrayFish[i] < 0) {
+			arrayFish[i] = 0; // 물이 다 줄면 값을 0으로 고정
+		}
+	}
+	return;
+}
+
+int checkFishAlive() {
+	for (int i = 0; i < 6; i++) {
+		if (arrayFish[i] > 0) {
+			return 1;
+		}
+	}
+	return 0;
 }
